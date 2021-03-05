@@ -22,6 +22,9 @@ import {
   SEARCH_POSTS_SUCCESS,
   SEARCH_POSTS_ERROR,
 } from './constants';
+import storage from 'redux-persist/lib/storage';
+import { persistReducer } from 'redux-persist';
+import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 
 // The initial state of the App
 export const initialState = {
@@ -107,4 +110,11 @@ const homeReducer = (state = initialState, action) =>
     }
   });
 
-export default homeReducer;
+const persistConfig = {
+  key: 'home',
+  storage: storage,
+  stateReconciler: autoMergeLevel2,
+  whitelist: ['users', 'posts', 'comments'],
+};
+
+export default persistReducer(persistConfig, homeReducer);
