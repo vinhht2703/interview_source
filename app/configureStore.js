@@ -42,7 +42,7 @@ export default function configureStore(initialState = {}, history) {
   const persistConfig = {
     key: 'root',
     storage,
-    blacklist: ['home'],
+    blacklist: ['home', 'router'],
     stateReconciler: autoMergeLevel2,
   };
 
