@@ -9,12 +9,13 @@ import { fetchComments } from 'containers/HomePage/actions';
 import { createStructuredSelector } from 'reselect';
 import { Comment, Tooltip, List, Tag } from 'antd';
 import moment from 'moment';
+import { Link } from 'react-router-dom';
 import './styles.scss';
 
-export function PostItem({ post, users, commentData, onFetchComments }) {
-  const [isListOpen, openList] = useState(false);
+export function PostItem({ post, users, commentData, onFetchComments, type }) {
+  const [isListOpen, openList] = useState(type === 'detail');
   const [handledComments, updateComments] = useState([]);
-  
+
   const { body, id, title, userId } = post || {};
   const foundedUser = Array.isArray(users) && users.find(u => u.id === userId);
   const { name } = foundedUser || {};
@@ -22,7 +23,7 @@ export function PostItem({ post, users, commentData, onFetchComments }) {
 
   useEffect(() => {
     onFetchComments({ id });
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (Array.isArray(comments)) updateComments(handleComments(comments));
@@ -60,7 +61,9 @@ export function PostItem({ post, users, commentData, onFetchComments }) {
   return (
     <div className="post-item card my-3">
       <div className="card-body">
-        <h2 className="card-title text-center px-4">{title}</h2>
+        <Link to={`/post-detail/${id}`}>
+          <h2 className="card-title text-center px-4">{title}</h2>
+        </Link>
         <div className="card-subtitle my-3 text-muted row">
           <div className="col-7">
             <span>Author: {name}</span>
@@ -81,9 +84,16 @@ export function PostItem({ post, users, commentData, onFetchComments }) {
             <Tag color="purple">purple</Tag>
           </div>
         </div>
-        <p className="post-body card-text">
-          {(body || '').slice(0, 100) + '...'}
-        </p>
+
+        <Link
+          to={`/post-detail/${id}`}
+          style={{ textDecoration: 'none', color: 'black' }}
+        >
+          <p className="post-body card-text">
+            {type === 'detail' ? body : (body || '').slice(0, 100) + '...'}
+          </p>
+        </Link>
+
         <div className="p-2">
           <List
             className="comment-list"

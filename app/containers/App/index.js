@@ -12,19 +12,49 @@ import { Switch, Route } from 'react-router-dom';
 import HomePage from 'containers/HomePage/Loadable';
 import NotFoundPage from 'containers/NotFoundPage/Loadable';
 import NavigationBar from 'components/NavigationBar';
+import PostDetailPage from 'containers/PostDetailPage/Loadable';
 import GlobalStyle from '../../global-styles';
 
 const AppWrapper = styled.div``;
+
+const routes = [
+  {
+    path: '/',
+    component: HomePage,
+    exact: true,
+  },
+  {
+    path: '/post-detail/:id',
+    component: PostDetailPage,
+  },
+  {
+    path: '',
+    component: NotFoundPage,
+  },
+];
 
 export default function App() {
   return (
     <AppWrapper>
       <NavigationBar />
       <Switch>
-        <Route exact path="/" component={HomePage} />
-        <Route path="" component={NotFoundPage} />
+        {routes.map((route, i) => (
+          <RouteWithSubRoutes key={i} {...route} />
+        ))}
       </Switch>
       <GlobalStyle />
     </AppWrapper>
+  );
+}
+
+function RouteWithSubRoutes(route) {
+  return (
+    <Route
+      path={route.path}
+      render={props => (
+        // pass the sub-routes down to keep nesting
+        <route.component {...props} routes={route.routes} />
+      )}
+    />
   );
 }

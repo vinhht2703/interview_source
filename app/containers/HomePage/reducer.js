@@ -43,7 +43,7 @@ const homeReducer = (state = initialState, action) =>
       case FETCH_POSTS:
         draft.loading = true;
         draft.error = false;
-        draft.posts = false;
+        draft.posts = state.posts;
         break;
 
       case FETCH_POSTS_SUCCESS:
@@ -57,7 +57,7 @@ const homeReducer = (state = initialState, action) =>
         break;
 
       case FETCH_USERS:
-        draft.users = false;
+        draft.users = state.users;
         break;
 
       case FETCH_USERS_SUCCESS:

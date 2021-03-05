@@ -7,10 +7,13 @@ import PropTypes from 'prop-types';
 import { createStructuredSelector } from 'reselect';
 import { connect } from 'react-redux';
 import _debounce from 'lodash/debounce';
+import { makeSelectLocation } from 'containers/App/selectors';
 
 const { Search } = Input;
 
-function NavigationBar({ onSearchPosts }) {
+function NavigationBar(props) {
+  const { onSearchPosts, location } = props || {};
+  const { pathname } = location || {};
   const fullName = 'Huynh Tan Vinh';
 
   const debounceLoadData = useCallback(
@@ -32,17 +35,19 @@ function NavigationBar({ onSearchPosts }) {
             <Link to="/">
               <span className="navbar-brand pl-3">Logo</span>
             </Link>
-            <Search
-              className="d-none d-sm-block"
-              placeholder="Search posts here..."
-              // onSearch={onSearch}
-              onChange={onChange}
-              allowClear
-            />
+            {pathname === '/' ? (
+              <Search
+                className="d-none d-sm-block"
+                placeholder="Search posts here..."
+                // onSearch={onSearch}
+                onChange={onChange}
+                allowClear
+              />
+            ) : null}
           </div>
           <div className="col-2">
             <Link className="d-flex justify-content-center" to="/">
-              <span className="navbar-text">Blogs</span>
+              <h4 className="navbar-text mb-0">Blogs</h4>
             </Link>
           </div>
           <div className="col-5 pr-0">
@@ -63,9 +68,12 @@ function NavigationBar({ onSearchPosts }) {
 
 NavigationBar.propTypes = {
   onSearchPosts: PropTypes.func,
+  location: PropTypes.object,
 };
 
-const mapStateToProps = createStructuredSelector({});
+const mapStateToProps = createStructuredSelector({
+  location: makeSelectLocation(),
+});
 
 export function mapDispatchToProps(dispatch) {
   return {

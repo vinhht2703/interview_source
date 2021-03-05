@@ -15,11 +15,10 @@ import {
   makeSelectPosts,
   makeSelectLoading,
   makeSelectError,
-  makeSelectUsers,
   makeSelectIsSearching,
   makeSelectSearchedPosts,
 } from './selectors';
-import { fetchPosts, fetchUsers } from './actions';
+import { fetchPosts, fetchUsers, searchPosts } from './actions';
 import reducer from './reducer';
 import saga from './saga';
 import PostComponent from 'components/PostItem';
@@ -32,8 +31,8 @@ const limit = 15;
 export function HomePage({
   onFetchUsers,
   onFetchPosts,
+  onSearchPosts,
   posts,
-  users,
   loading,
   searchedPosts,
   isSearching,
@@ -46,8 +45,12 @@ export function HomePage({
   useInjectSaga({ key, saga });
 
   useEffect(() => {
-    onFetchPosts();
-    onFetchUsers();
+    if (typeof onFetchPosts === 'function') onFetchPosts();
+    if (typeof onFetchUsers === 'function') onFetchUsers();
+
+    return () => {
+      if (typeof onSearchPosts === 'function') onSearchPosts({ keyword: null });
+    };
   }, []);
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export function HomePage({
     } else {
       setPostsData(posts);
     }
-  }, [searchedPosts, posts]);
+  }, [isSearching, searchedPosts, posts]);
 
   useEffect(() => {
     if (Array.isArray(postsData)) {
@@ -83,7 +86,7 @@ export function HomePage({
 
   const _renderPosts = () => {
     return curPosts.map(post => {
-      return <PostComponent post={post} users={users} />;
+      return <PostComponent post={post} />;
     });
   };
 
@@ -127,7 +130,6 @@ HomePage.propTypes = {
 
 const mapStateToProps = createStructuredSelector({
   posts: makeSelectPosts(),
-  users: makeSelectUsers(),
   searchedPosts: makeSelectSearchedPosts(),
   loading: makeSelectLoading(),
   isSearching: makeSelectIsSearching(),
@@ -142,6 +144,7 @@ export function mapDispatchToProps(dispatch) {
     onFetchUsers: evt => {
       dispatch(fetchUsers());
     },
+    onSearchPosts: payload => dispatch(searchPosts(payload)),
   };
 }
 

@@ -22,14 +22,23 @@ import {
   searchPostsSuccess,
   searchPostsError,
 } from './actions';
-import { makeSelectPosts, makeSelectComments } from './selectors';
+import {
+  makeSelectPosts,
+  makeSelectComments,
+  makeSelectUsers,
+} from './selectors';
 import axios from 'axios';
 import { unsignedString } from 'utils/string';
 
 export function* getPosts() {
-  const requestURL = `https://jsonplaceholder.typicode.com/posts`;
   try {
+    const posts = yield select(makeSelectPosts());
+
+    if (Array.isArray(posts) && posts.length) return;
+
+    const requestURL = `https://jsonplaceholder.typicode.com/posts`;
     const res = yield call(axios.get, requestURL);
+
     if (res && res.data) yield put(fetchPostsSuccess(res.data));
   } catch (err) {
     yield put(fetchPostsError(err));
@@ -37,9 +46,14 @@ export function* getPosts() {
 }
 
 export function* getUsers() {
-  const requestURL = `https://jsonplaceholder.typicode.com/users`;
   try {
+    const users = yield select(makeSelectUsers());
+
+    if (Array.isArray(users) && users.length) return;
+
+    const requestURL = `https://jsonplaceholder.typicode.com/users`;
     const res = yield call(axios.get, requestURL);
+
     if (res && res.data) yield put(fetchUsersSuccess(res.data));
   } catch (err) {
     yield put(fetchUsersError(err));
@@ -73,6 +87,11 @@ export function* searchPosts(actions) {
   try {
     const posts = yield select(makeSelectPosts());
 
+    if (!keyword || !Array.isArray(posts)) {
+      yield put(searchPostsSuccess({ searchedPosts: [], isSearching: false }));
+      return;
+    }
+
     const unsignedKeyword = unsignedString(keyword).toLowerCase();
 
     const searchedPosts = posts.filter(
@@ -104,7 +123,7 @@ export function* watchSearchPosts() {
   yield takeLatest(SEARCH_POSTS, searchPosts);
 }
 
-export default function* blogSaga() {
+export default function* homeSaga() {
   yield spawn(watchGetPosts);
   yield spawn(watchGetUsers);
   yield spawn(watchGetComments);

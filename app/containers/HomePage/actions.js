@@ -40,7 +40,6 @@ export function fetchUsers() {
 }
 
 export function fetchUsersSuccess(users) {
-  // console.log('users_res', users);
   return {
     type: FETCH_USERS_SUCCESS,
     users,
