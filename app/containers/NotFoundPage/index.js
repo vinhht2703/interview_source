@@ -6,16 +6,14 @@
 
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
-
-import H1 from 'components/H1';
 import messages from './messages';
 
 export default function NotFound() {
   return (
-    <article>
-      <H1>
+    <div className="container py-5">
+      <h1 className="text-center">
         <FormattedMessage {...messages.header} />
-      </H1>
-    </article>
+      </h1>
+    </div>
   );
 }
