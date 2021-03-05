@@ -8,20 +8,101 @@
  */
 
 import produce from 'immer';
-import { CHANGE_USERNAME } from './constants';
+import {
+  FETCH_POSTS,
+  FETCH_POSTS_SUCCESS,
+  FETCH_POSTS_ERROR,
+  FETCH_USERS,
+  FETCH_USERS_SUCCESS,
+  FETCH_USERS_ERROR,
+  FETCH_COMMENTS,
+  FETCH_COMMENTS_SUCCESS,
+  FETCH_COMMENTS_ERROR,
+  SEARCH_POSTS,
+  SEARCH_POSTS_SUCCESS,
+  SEARCH_POSTS_ERROR,
+} from './constants';
 
 // The initial state of the App
 export const initialState = {
-  username: '',
+  loading: false,
+  error: false,
+  posts: [],
+  users: [],
+  comments: {},
+  isSearching: false,
+  searchedPosts: [],
 };
 
 /* eslint-disable default-case, no-param-reassign */
 const homeReducer = (state = initialState, action) =>
   produce(state, draft => {
+    const { payload } = action || {};
+
     switch (action.type) {
-      case CHANGE_USERNAME:
-        // Delete prefixed '@' from the github username
-        draft.username = action.username.replace(/@/gi, '');
+      case FETCH_POSTS:
+        draft.loading = true;
+        draft.error = false;
+        draft.posts = false;
+        break;
+
+      case FETCH_POSTS_SUCCESS:
+        draft.posts = action.posts;
+        draft.loading = false;
+        break;
+
+      case FETCH_POSTS_ERROR:
+        draft.error = action.error;
+        draft.loading = false;
+        break;
+
+      case FETCH_USERS:
+        draft.users = false;
+        break;
+
+      case FETCH_USERS_SUCCESS:
+        draft.users = action.users;
+        break;
+
+      case FETCH_USERS_ERROR:
+        draft.error = action.error;
+        break;
+
+      case FETCH_COMMENTS:
+        draft.comments = state.comments;
+        break;
+
+      case FETCH_COMMENTS_SUCCESS:
+        const { postId, comments } = payload || {};
+
+        draft.comments = { ...state.comments, [`${postId}`]: comments };
+
+        break;
+
+      case FETCH_COMMENTS_ERROR:
+        draft.error = action.error;
+        break;
+
+      case SEARCH_POSTS:
+        console.log('SEARCH_POSTS');
+        draft.loading = true;
+        draft.isSearching = true;
+        draft.searchedPosts = [];
+        break;
+
+      case SEARCH_POSTS_SUCCESS:
+        const { isSearching, searchedPosts } = payload || {};
+
+        console.log('SEARCH_POSTS_SUCCESS', searchedPosts, isSearching);
+
+        draft.loading = false;
+        draft.isSearching = isSearching;
+        draft.searchedPosts = searchedPosts;
+        break;
+
+      case SEARCH_POSTS_ERROR:
+        draft.error = action.error;
+        draft.loading = false;
         break;
     }
   });

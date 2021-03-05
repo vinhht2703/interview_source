@@ -4,125 +4,143 @@
  * This is the first thing users see of our App, at the '/' route
  */
 
-import React, { useEffect, memo } from 'react';
+import React, { useEffect, memo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { FormattedMessage } from 'react-intl';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { createStructuredSelector } from 'reselect';
-
 import { useInjectReducer } from 'utils/injectReducer';
 import { useInjectSaga } from 'utils/injectSaga';
 import {
-  makeSelectRepos,
+  makeSelectPosts,
   makeSelectLoading,
   makeSelectError,
-} from 'containers/App/selectors';
-import H2 from 'components/H2';
-import ReposList from 'components/ReposList';
-import AtPrefix from './AtPrefix';
-import CenteredSection from './CenteredSection';
-import Form from './Form';
-import Input from './Input';
-import Section from './Section';
-import messages from './messages';
-import { loadRepos } from '../App/actions';
-import { changeUsername } from './actions';
-import { makeSelectUsername } from './selectors';
+  makeSelectUsers,
+  makeSelectIsSearching,
+  makeSelectSearchedPosts,
+} from './selectors';
+import { fetchPosts, fetchUsers } from './actions';
 import reducer from './reducer';
 import saga from './saga';
+import PostComponent from 'components/PostItem';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { Empty } from 'antd';
 
 const key = 'home';
+const limit = 15;
 
 export function HomePage({
-  username,
+  onFetchUsers,
+  onFetchPosts,
+  posts,
+  users,
   loading,
-  error,
-  repos,
-  onSubmitForm,
-  onChangeUsername,
+  searchedPosts,
+  isSearching,
 }) {
+  const [curPage, updatePage] = useState(1);
+  const [curPosts, updatePosts] = useState([]);
+  const [postsData, setPostsData] = useState([]);
+
   useInjectReducer({ key, reducer });
   useInjectSaga({ key, saga });
 
   useEffect(() => {
-    // When initial state username is not null, submit the form to load repos
-    if (username && username.trim().length > 0) onSubmitForm();
+    onFetchPosts();
+    onFetchUsers();
   }, []);
 
-  const reposListProps = {
-    loading,
-    error,
-    repos,
+  useEffect(() => {
+    updatePage(1);
+    updatePosts([]);
+    if (isSearching) {
+      setPostsData(searchedPosts);
+    } else {
+      setPostsData(posts);
+    }
+  }, [searchedPosts, posts]);
+
+  useEffect(() => {
+    if (Array.isArray(postsData)) {
+      updatePosts(postsData.slice(0, limit));
+    }
+  }, [postsData]);
+
+  useEffect(() => {
+    if (
+      typeof curPage === 'number' &&
+      curPage !== 1 &&
+      Array.isArray(postsData)
+    ) {
+      const updatedPosts = [
+        ...curPosts,
+        ...postsData.slice((curPage - 1) * limit, limit * curPage),
+      ];
+
+      updatePosts(updatedPosts);
+    }
+  }, [curPage]);
+
+  const _renderPosts = () => {
+    return curPosts.map(post => {
+      return <PostComponent post={post} users={users} />;
+    });
   };
 
   return (
-    <article>
-      <Helmet>
-        <title>Home Page</title>
-        <meta
-          name="description"
-          content="A React.js Boilerplate application homepage"
-        />
-      </Helmet>
-      <div>
-        <CenteredSection>
-          <H2>
-            <FormattedMessage {...messages.startProjectHeader} />
-          </H2>
-          <p>
-            <FormattedMessage {...messages.startProjectMessage} />
-          </p>
-        </CenteredSection>
-        <Section>
-          <H2>
-            <FormattedMessage {...messages.trymeHeader} />
-          </H2>
-          <Form onSubmit={onSubmitForm}>
-            <label htmlFor="username">
-              <FormattedMessage {...messages.trymeMessage} />
-              <AtPrefix>
-                <FormattedMessage {...messages.trymeAtPrefix} />
-              </AtPrefix>
-              <Input
-                id="username"
-                type="text"
-                placeholder="mxstbr"
-                value={username}
-                onChange={onChangeUsername}
-              />
-            </label>
-          </Form>
-          <ReposList {...reposListProps} />
-        </Section>
-      </div>
-    </article>
+    <div className="container">
+      {Array.isArray(postsData) && postsData.length ? (
+        <InfiniteScroll
+          dataLength={curPosts.length}
+          hasMore={curPosts.length < postsData.length}
+          next={() => updatePage(curPage + 1)}
+          loader={
+            <div class="spinner-border text-secondary" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          }
+          endMessage={
+            <p style={{ textAlign: 'center' }}>
+              <b>Yay! You have seen it all</b>
+            </p>
+          }
+        >
+          {_renderPosts()}
+        </InfiniteScroll>
+      ) : !loading ? (
+        <div className="">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 HomePage.propTypes = {
   loading: PropTypes.bool,
   error: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  repos: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
-  onSubmitForm: PropTypes.func,
-  username: PropTypes.string,
-  onChangeUsername: PropTypes.func,
+  posts: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
+  searchedPosts: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
+  onFetchPosts: PropTypes.func,
+  onFetchUsers: PropTypes.func,
 };
 
 const mapStateToProps = createStructuredSelector({
-  repos: makeSelectRepos(),
-  username: makeSelectUsername(),
+  posts: makeSelectPosts(),
+  users: makeSelectUsers(),
+  searchedPosts: makeSelectSearchedPosts(),
   loading: makeSelectLoading(),
+  isSearching: makeSelectIsSearching(),
   error: makeSelectError(),
 });
 
 export function mapDispatchToProps(dispatch) {
   return {
-    onChangeUsername: evt => dispatch(changeUsername(evt.target.value)),
-    onSubmitForm: evt => {
-      if (evt !== undefined && evt.preventDefault) evt.preventDefault();
-      dispatch(loadRepos());
+    onFetchPosts: evt => {
+      dispatch(fetchPosts());
+    },
+    onFetchUsers: evt => {
+      dispatch(fetchUsers());
     },
   };
 }

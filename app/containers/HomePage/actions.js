@@ -1,32 +1,97 @@
-/*
- * Home Actions
- *
- * Actions change things in your application
- * Since this boilerplate uses a uni-directional data flow, specifically redux,
- * we have these actions which are the only way your application interacts with
- * your application state. This guarantees that your state is up to date and nobody
- * messes it up weirdly somewhere.
- *
- * To add a new Action:
- * 1) Import your constant
- * 2) Add a function like this:
- *    export function yourAction(var) {
- *        return { type: YOUR_ACTION_CONSTANT, var: var }
- *    }
- */
+import {
+  FETCH_POSTS,
+  FETCH_POSTS_SUCCESS,
+  FETCH_POSTS_ERROR,
+  FETCH_USERS,
+  FETCH_USERS_SUCCESS,
+  FETCH_USERS_ERROR,
+  FETCH_COMMENTS,
+  FETCH_COMMENTS_SUCCESS,
+  FETCH_COMMENTS_ERROR,
+  SEARCH_POSTS,
+  SEARCH_POSTS_SUCCESS,
+  SEARCH_POSTS_ERROR,
+} from './constants';
 
-import { CHANGE_USERNAME } from './constants';
-
-/**
- * Changes the input field of the form
- *
- * @param  {string} username The new text of the input field
- *
- * @return {object} An action object with a type of CHANGE_USERNAME
- */
-export function changeUsername(username) {
+export function fetchPosts() {
   return {
-    type: CHANGE_USERNAME,
-    username,
+    type: FETCH_POSTS,
+  };
+}
+
+export function fetchPostsSuccess(posts) {
+  return {
+    type: FETCH_POSTS_SUCCESS,
+    posts,
+  };
+}
+
+export function fetchPostsError(error) {
+  return {
+    type: FETCH_POSTS_ERROR,
+    error,
+  };
+}
+
+export function fetchUsers() {
+  return {
+    type: FETCH_USERS,
+  };
+}
+
+export function fetchUsersSuccess(users) {
+  // console.log('users_res', users);
+  return {
+    type: FETCH_USERS_SUCCESS,
+    users,
+  };
+}
+
+export function fetchUsersError(error) {
+  return {
+    type: FETCH_USERS_ERROR,
+    error,
+  };
+}
+
+export function fetchComments(payload) {
+  return {
+    payload,
+    type: FETCH_COMMENTS,
+  };
+}
+
+export function fetchCommentsSuccess(payload) {
+  return {
+    type: FETCH_COMMENTS_SUCCESS,
+    payload,
+  };
+}
+
+export function fetchCommentsError(error) {
+  return {
+    type: FETCH_COMMENTS_ERROR,
+    error,
+  };
+}
+
+export function searchPosts(payload) {
+  return {
+    payload,
+    type: SEARCH_POSTS,
+  };
+}
+
+export function searchPostsSuccess(payload) {
+  return {
+    type: SEARCH_POSTS_SUCCESS,
+    payload,
+  };
+}
+
+export function searchPostsError(error) {
+  return {
+    type: SEARCH_POSTS_ERROR,
+    error,
   };
 }

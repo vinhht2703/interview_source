@@ -1,38 +1,112 @@
-/**
- * Gets the repositories of the user from Github
- */
+import {
+  call,
+  put,
+  spawn,
+  takeLatest,
+  takeEvery,
+  select,
+} from 'redux-saga/effects';
+import {
+  FETCH_COMMENTS,
+  FETCH_POSTS,
+  FETCH_USERS,
+  SEARCH_POSTS,
+} from './constants';
+import {
+  fetchPostsSuccess,
+  fetchPostsError,
+  fetchUsersSuccess,
+  fetchUsersError,
+  fetchCommentsSuccess,
+  fetchCommentsError,
+  searchPostsSuccess,
+  searchPostsError,
+} from './actions';
+import { makeSelectPosts, makeSelectComments } from './selectors';
+import axios from 'axios';
+import { unsignedString } from 'utils/string';
 
-import { call, put, select, takeLatest } from 'redux-saga/effects';
-import { LOAD_REPOS } from 'containers/App/constants';
-import { reposLoaded, repoLoadingError } from 'containers/App/actions';
+export function* getPosts() {
+  const requestURL = `https://jsonplaceholder.typicode.com/posts`;
+  try {
+    const res = yield call(axios.get, requestURL);
+    if (res && res.data) yield put(fetchPostsSuccess(res.data));
+  } catch (err) {
+    yield put(fetchPostsError(err));
+  }
+}
 
-import request from 'utils/request';
-import { makeSelectUsername } from 'containers/HomePage/selectors';
+export function* getUsers() {
+  const requestURL = `https://jsonplaceholder.typicode.com/users`;
+  try {
+    const res = yield call(axios.get, requestURL);
+    if (res && res.data) yield put(fetchUsersSuccess(res.data));
+  } catch (err) {
+    yield put(fetchUsersError(err));
+  }
+}
 
-/**
- * Github repos request/response handler
- */
-export function* getRepos() {
-  // Select username from store
-  const username = yield select(makeSelectUsername());
-  const requestURL = `https://api.github.com/users/${username}/repos?type=all&sort=updated`;
+export function* getComments(actions) {
+  try {
+    const { payload } = actions || {};
+    const { id } = payload || {};
+    const comments = yield select(makeSelectComments());
+
+    if (comments[id]) {
+      return;
+    }
+
+    const requestURL = `https://jsonplaceholder.typicode.com/posts/${id}/comments`;
+    const res = yield call(axios.get, requestURL);
+
+    if (res && res.data)
+      yield put(fetchCommentsSuccess({ postId: id, comments: res.data }));
+  } catch (err) {
+    yield put(fetchCommentsError(err));
+  }
+}
+
+export function* searchPosts(actions) {
+  const { payload } = actions || {};
+  const { keyword } = payload || {};
 
   try {
-    // Call our request helper (see 'utils/request')
-    const repos = yield call(request, requestURL);
-    yield put(reposLoaded(repos, username));
-  } catch (err) {
-    yield put(repoLoadingError(err));
+    const posts = yield select(makeSelectPosts());
+
+    const unsignedKeyword = unsignedString(keyword).toLowerCase();
+
+    const searchedPosts = posts.filter(
+      p =>
+        p &&
+        typeof p.title == 'string' &&
+        p.title.toLowerCase().includes(unsignedKeyword),
+    );
+
+    yield put(searchPostsSuccess({ searchedPosts, isSearching: true }));
+  } catch (error) {
+    yield put(searchPostsError(error));
   }
 }
 
 /**
  * Root saga manages watcher lifecycle
  */
-export default function* githubData() {
-  // Watches for LOAD_REPOS actions and calls getRepos when one comes in.
-  // By using `takeLatest` only the result of the latest API call is applied.
-  // It returns task descriptor (just like fork) so we can continue execution
-  // It will be cancelled automatically on component unmount
-  yield takeLatest(LOAD_REPOS, getRepos);
+export function* watchGetPosts() {
+  yield takeLatest(FETCH_POSTS, getPosts);
+}
+export function* watchGetUsers() {
+  yield takeLatest(FETCH_USERS, getUsers);
+}
+export function* watchGetComments() {
+  yield takeEvery(FETCH_COMMENTS, getComments);
+}
+export function* watchSearchPosts() {
+  yield takeLatest(SEARCH_POSTS, searchPosts);
+}
+
+export default function* blogSaga() {
+  yield spawn(watchGetPosts);
+  yield spawn(watchGetUsers);
+  yield spawn(watchGetComments);
+  yield spawn(watchSearchPosts);
 }
